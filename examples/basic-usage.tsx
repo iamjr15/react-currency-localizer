@@ -6,7 +6,7 @@
  */
 
 import React from 'react'
-import { CurrencyConverterProvider, useCurrencyConverter } from '@iamjr15/react-currency-localizer'
+import { CurrencyConverterProvider, useCurrencyConverter } from 'react-currency-localizer'
 
 // Simple price display component
 function ProductPrice({ price }: { price: number }) {

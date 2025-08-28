@@ -10,7 +10,7 @@ import {
   CurrencyConverterProvider, 
   LocalizedPrice, 
   useCurrencyConverter 
-} from '@iamjr15/react-currency-localizer'
+} from 'react-currency-localizer'
 
 // Product interface
 interface Product {

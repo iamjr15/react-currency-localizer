@@ -1,6 +1,6 @@
 # React Currency Localizer
 
-[![npm version](https://badge.fury.io/js/@iamjr15%2Freact-currency-localizer.svg?icon=si%3Anpm)](https://badge.fury.io/js/@iamjr15%2Freact-currency-localizer)
+[![npm version](https://badge.fury.io/js/react-currency-localizer.svg?icon=si%3Anpm)](https://badge.fury.io/js/react-currency-localizer)
 [![TypeScript](https://img.shields.io/badge/TypeScript-Ready-blue.svg)](https://www.typescriptlang.org/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -36,13 +36,13 @@ A React hook for automatically displaying prices in a user's local currency usin
 
 ```bash
 # npm
-npm install @iamjr15/react-currency-localizer @tanstack/react-query
+npm install react-currency-localizer @tanstack/react-query
 
 # yarn
-yarn add @iamjr15/react-currency-localizer @tanstack/react-query
+yarn add react-currency-localizer @tanstack/react-query
 
 # pnpm
-pnpm add @iamjr15/react-currency-localizer @tanstack/react-query
+pnpm add react-currency-localizer @tanstack/react-query
 ```
 
 > **Note**: `@tanstack/react-query` is a peer dependency required for caching and data fetching.
@@ -52,7 +52,7 @@ pnpm add @iamjr15/react-currency-localizer @tanstack/react-query
 ### 1. Wrap Your App with the Provider
 
 ```tsx
-import { CurrencyConverterProvider } from '@iamjr15/react-currency-localizer'
+import { CurrencyConverterProvider } from 'react-currency-localizer'
 
 function App() {
   return (
@@ -66,7 +66,7 @@ function App() {
 ### 2. Use the Hook
 
 ```tsx
-import { useCurrencyConverter } from '@iamjr15/react-currency-localizer'
+import { useCurrencyConverter } from 'react-currency-localizer'
 
 function ProductPrice({ price }: { price: number }) {
   const { 
@@ -97,7 +97,7 @@ function ProductPrice({ price }: { price: number }) {
 ### 3. Or Use the Component
 
 ```tsx
-import { LocalizedPrice } from '@iamjr15/react-currency-localizer'
+import { LocalizedPrice } from 'react-currency-localizer'
 
 function ProductCard() {
   return (
@@ -422,7 +422,7 @@ The package uses **TanStack Query** for robust state management with optimal cac
 
 ```tsx
 import { QueryClient } from '@tanstack/react-query'
-import { CurrencyConverterProvider } from '@iamjr15/react-currency-localizer'
+import { CurrencyConverterProvider } from 'react-currency-localizer'
 
 // Custom QueryClient with optimized caching strategy
 const queryClient = new QueryClient({
