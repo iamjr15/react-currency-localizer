@@ -42,6 +42,7 @@ const createPersister = () => {
 export const CurrencyConverterProvider: React.FC<CurrencyConverterProviderProps> = ({
   children,
   queryClient,
+  enablePersistence = true,
 }) => {
   // Create QueryClient instance per provider to avoid singleton issues
   // This is better for React Strict Mode, testing, and SSR
@@ -51,18 +52,20 @@ export const CurrencyConverterProvider: React.FC<CurrencyConverterProviderProps>
 
     // Otherwise, create a new one ONCE per component instance
     const newClient = createDefaultQueryClient()
-    
-    // Set up persistence if possible
-    const persister = createPersister()
-    if (persister) {
-      persistQueryClient({
-        queryClient: newClient,
-        persister,
-        maxAge: 1000 * 60 * 60 * 24, // 24 hours
-        buster: 'v1', // Change this to invalidate old cache
-      })
+
+    // Set up persistence if enabled and possible
+    if (enablePersistence) {
+      const persister = createPersister()
+      if (persister) {
+        persistQueryClient({
+          queryClient: newClient,
+          persister,
+          maxAge: 1000 * 60 * 60 * 24, // 24 hours
+          buster: 'v1', // Change this to invalidate old cache
+        })
+      }
     }
-    
+
     return newClient
   })
 

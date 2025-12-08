@@ -10,6 +10,8 @@ export interface UseCurrencyConverterOptions {
   apiKey: string
   /** A three-letter ISO 4217 code to manually specify the target currency, bypassing IP geolocation */
   manualCurrency?: string
+  /** Custom geolocation endpoint URL (defaults to ipapi.co). Must return JSON with 'currency' field */
+  geoEndpoint?: string
   /** An optional callback function that fires upon a successful conversion */
   onSuccess?: (data: CurrencyResult) => void
   /** An optional callback function that fires upon failure */
@@ -66,6 +68,8 @@ export interface LocalizedPriceProps {
   apiKey: string
   /** Optional override for the target currency */
   manualCurrency?: string
+  /** Custom geolocation endpoint URL (defaults to ipapi.co) */
+  geoEndpoint?: string
   /** Optional component to show while loading */
   loadingComponent?: React.ReactNode
   /** Optional component to show on error */
@@ -81,4 +85,6 @@ export interface CurrencyConverterProviderProps {
   children: React.ReactNode
   /** Optional custom QueryClient instance */
   queryClient?: import('@tanstack/react-query').QueryClient
+  /** Enable localStorage persistence for caching (default: true). Set to false for smaller bundle */
+  enablePersistence?: boolean
 }

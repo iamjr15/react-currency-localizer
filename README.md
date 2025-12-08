@@ -22,12 +22,13 @@ A React hook for automatically displaying prices in a user's local currency usin
 - **Robust Input Validation**: Case-insensitive currency codes and pre-emptive API key validation
 - **Graceful Error Handling**: Intelligent fallbacks and specific error messages
 - **TypeScript Support**: Fully typed with comprehensive type definitions
-- **Multiple Usage Patterns**: Hook-based API and declarative component wrapper
+- **Multiple Usage Patterns**: Hook-based API, batch converter, and declarative component
 - **Automatic Currency Detection**: Uses IP geolocation to detect user's local currency
 - **Manual Override Support**: Bypass geolocation with explicit currency selection
+- **Configurable Geolocation**: Use custom geo endpoints for flexibility
 
 ### Production Ready
-- **Lightweight**: Only ~21kB (gzipped: ~6.8kB) with minimal runtime dependencies
+- **Lightweight**: ~27kB (gzipped: ~8.2kB) with minimal runtime dependencies
 - **Framework Agnostic**: Works with any React application
 - **HTTPS Compatible**: Uses HTTPS-only APIs safe for production deployments
 - **Free APIs**: Uses only free-tier APIs (no credit card required)
@@ -128,6 +129,7 @@ The main hook for currency conversion.
 | `baseCurrency` | `string` | ✅ | ISO 4217 currency code (case-insensitive, e.g., 'USD' or 'usd') |
 | `apiKey` | `string` | ✅ | API key from exchangerate-api.com (validated for helpful error messages) |
 | `manualCurrency` | `string` | ❌ | Override detected currency (case-insensitive) |
+| `geoEndpoint` | `string` | ❌ | Custom geolocation endpoint URL (defaults to ipapi.co) |
 | `onSuccess` | `function` | ❌ | Callback on successful conversion |
 | `onError` | `function` | ❌ | Callback on error |
 
@@ -154,9 +156,74 @@ React component for displaying localized prices.
 | `baseCurrency` | `string` | ✅ | ISO 4217 currency code (case-insensitive) |
 | `apiKey` | `string` | ✅ | ExchangeRate API key (validated automatically) |
 | `manualCurrency` | `string` | ❌ | Override detected currency (case-insensitive) |
+| `geoEndpoint` | `string` | ❌ | Custom geolocation endpoint URL |
 | `loadingComponent` | `ReactNode` | ❌ | Custom loading component |
 | `errorComponent` | `function` | ❌ | Custom error component (if not provided, shows original price as fallback) |
 | `formatPrice` | `function` | ❌ | Custom price formatter |
+
+### `useCurrencyLocalizer(options)`
+
+Batch-friendly hook for converting multiple prices efficiently. Ideal for e-commerce with many products.
+
+#### Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `baseCurrency` | `string` | ✅ | ISO 4217 currency code |
+| `apiKey` | `string` | ✅ | API key from exchangerate-api.com |
+| `manualCurrency` | `string` | ❌ | Override detected currency |
+| `geoEndpoint` | `string` | ❌ | Custom geolocation endpoint URL |
+| `onReady` | `function` | ❌ | Callback when converter is ready |
+| `onError` | `function` | ❌ | Callback on error |
+
+#### Returns
+
+| Property | Type | Description |
+|----------|------|-------------|
+| `convert` | `(price: number) => number \| null` | Convert a price |
+| `format` | `(price: number) => string` | Format a price |
+| `convertAndFormat` | `(price: number) => string` | Convert and format in one call |
+| `localCurrency` | `string \| null` | Detected currency code |
+| `baseCurrency` | `string` | Original currency code |
+| `exchangeRate` | `number \| null` | Exchange rate used |
+| `isLoading` | `boolean` | Loading state |
+| `isReady` | `boolean` | True when ready to convert |
+| `error` | `Error \| null` | Error object if any |
+
+#### Example
+
+```tsx
+import { useCurrencyLocalizer } from 'react-currency-localizer'
+
+function ProductList({ products }) {
+  const { convertAndFormat, isReady } = useCurrencyLocalizer({
+    baseCurrency: 'USD',
+    apiKey: process.env.REACT_APP_EXCHANGE_API_KEY
+  })
+
+  return (
+    <ul>
+      {products.map(p => (
+        <li key={p.id}>
+          {p.name}: {isReady ? convertAndFormat(p.price) : '...'}
+        </li>
+      ))}
+    </ul>
+  )
+}
+```
+
+### `<CurrencyConverterProvider />`
+
+Provider component for TanStack Query setup.
+
+#### Props
+
+| Prop | Type | Required | Description |
+|------|------|----------|-------------|
+| `children` | `ReactNode` | ✅ | Child components |
+| `queryClient` | `QueryClient` | ❌ | Custom QueryClient instance |
+| `enablePersistence` | `boolean` | ❌ | Enable localStorage caching (default: `true`) |
 
 ## 💡 Usage Examples
 
@@ -488,7 +555,7 @@ While the library has minimal dependencies, it does include:
 - `@tanstack/query-sync-storage-persister` (for localStorage caching)
 - `@tanstack/react-query-persist-client` (for persistence integration)
 
-Total bundle impact: ~20kB minified, ~6.5kB gzipped.
+Total bundle impact: ~27kB minified, ~8.2kB gzipped. Set `enablePersistence={false}` on the provider to reduce size if persistence isn't needed.
 
 ## 🌍 Supported Currencies
 
@@ -717,13 +784,13 @@ The following currencies experience heightened volatility and substantial differ
 
 ## ⚡ Performance
 
-- **Bundle Size**: ~20kB minified, ~6.5kB gzipped
+- **Bundle Size**: ~27kB minified, ~8.2kB gzipped
 - **First Load**: 2 API calls (geolocation + exchange rates)
 - **Subsequent Loads**: 0-1 API calls (cached geolocation)
 - **Cache Duration**: 24 hours for geolocation, 1 hour for exchange rates
+- **Batch Conversion**: Convert 1000+ prices in <50ms after initial load
+- **Memoized Formatters**: `Intl.NumberFormat` instances are cached
 - **Rate Limits**: Handled gracefully with automatic fallbacks
-- **Validation**: Zero-cost currency normalization and API key validation
-- **Error Prevention**: Pre-emptive validation prevents wasted API calls
 
 ## 🔍 Troubleshooting
 
@@ -838,12 +905,12 @@ npm run test:integration:watch
 ### Test Coverage
 
 The package includes comprehensive tests covering:
-- **Unit Tests**: Hook functionality, component rendering, error handling (39 tests)
-- **Integration Tests**: Real API calls, caching performance, rate limiting (8 tests)
-- **Validation Tests**: Currency normalization, API key validation (4 tests)
+- **Unit Tests**: Hook functionality, component rendering, error handling
+- **Integration Tests**: Real API calls, caching performance, rate limiting
+- **Validation Tests**: Currency normalization, API key validation
 - **Edge Cases**: Zero prices, error scenarios, network failures
 - **TypeScript**: Full type checking and IntelliSense
-- **Total**: 49 tests with 100% code coverage
+- **Total**: 61 tests
 
 ## 🤝 Contributing
 

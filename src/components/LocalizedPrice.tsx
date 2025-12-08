@@ -1,4 +1,4 @@
-import React from 'react'
+import React, { useMemo } from 'react'
 import { useCurrencyConverter } from '../hooks/useCurrencyConverter'
 import type { LocalizedPriceProps } from '../types'
 
@@ -17,6 +17,7 @@ export const LocalizedPrice: React.FC<LocalizedPriceProps> = ({
   baseCurrency,
   apiKey,
   manualCurrency,
+  geoEndpoint,
   loadingComponent = <span>...</span>,
   errorComponent,
   formatPrice,
@@ -26,7 +27,32 @@ export const LocalizedPrice: React.FC<LocalizedPriceProps> = ({
     baseCurrency,
     apiKey,
     manualCurrency,
+    geoEndpoint,
   })
+
+  // Memoize formatters to avoid recreating on every render
+  const localFormatter = useMemo(() => {
+    if (!localCurrency) return null
+    try {
+      return new Intl.NumberFormat(undefined, {
+        style: 'currency',
+        currency: localCurrency,
+      })
+    } catch {
+      return null
+    }
+  }, [localCurrency])
+
+  const baseFormatter = useMemo(() => {
+    try {
+      return new Intl.NumberFormat(undefined, {
+        style: 'currency',
+        currency: baseCurrency.toUpperCase(),
+      })
+    } catch {
+      return null
+    }
+  }, [baseCurrency])
 
   // Show loading state
   if (isLoading) {
@@ -37,12 +63,12 @@ export const LocalizedPrice: React.FC<LocalizedPriceProps> = ({
   if (error || (convertedPrice === null && !isLoading)) {
     // If no custom error component is provided, show the original price as fallback
     if (!errorComponent) {
+      const fallbackPrice = baseFormatter
+        ? baseFormatter.format(basePrice)
+        : `${basePrice.toFixed(2)} ${baseCurrency.toUpperCase()}`
       return (
         <span title={`Conversion failed, showing original price in ${baseCurrency}`}>
-          {new Intl.NumberFormat(undefined, {
-            style: 'currency',
-            currency: baseCurrency,
-          }).format(basePrice)}
+          {fallbackPrice}
         </span>
       )
     }
@@ -55,13 +81,12 @@ export const LocalizedPrice: React.FC<LocalizedPriceProps> = ({
     return <>{loadingComponent}</>
   }
 
-  // Format the price using custom formatter or default Intl.NumberFormat
-  const formattedPrice = formatPrice 
+  // Format the price using custom formatter or memoized Intl.NumberFormat
+  const formattedPrice = formatPrice
     ? formatPrice(convertedPrice, localCurrency || baseCurrency)
-    : new Intl.NumberFormat(undefined, {
-        style: 'currency',
-        currency: localCurrency || baseCurrency,
-      }).format(convertedPrice)
+    : localFormatter
+      ? localFormatter.format(convertedPrice)
+      : `${convertedPrice.toFixed(2)} ${localCurrency || baseCurrency}`
 
   return <span title={`Converted from ${basePrice} ${baseCurrency}`}>{formattedPrice}</span>
 }

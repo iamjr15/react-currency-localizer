@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query'
-import { useState, useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import type {
   UseCurrencyConverterOptions,
   CurrencyResult,
@@ -9,33 +9,31 @@ import type {
 
 /**
  * Custom React hook for converting prices to user's local currency
- * 
+ *
  * Features:
  * - Automatic IP-based geolocation detection
  * - Manual currency override option
  * - Intelligent caching (24h for geolocation, 1h for exchange rates)
  * - Loading and error state management
  * - Success/error callbacks
- * 
+ *
  * @param options Configuration options for the currency converter
  * @returns Object containing conversion results and state
  */
+const DEFAULT_GEO_ENDPOINT = 'https://ipapi.co/json/'
+
 export const useCurrencyConverter = ({
   basePrice,
   baseCurrency,
   apiKey,
   manualCurrency,
+  geoEndpoint = DEFAULT_GEO_ENDPOINT,
   onSuccess,
   onError,
 }: UseCurrencyConverterOptions): CurrencyResult => {
   // Normalize currency codes to uppercase to prevent case-sensitivity issues
   const upperBaseCurrency = baseCurrency.toUpperCase()
   const upperManualCurrency = manualCurrency?.toUpperCase()
-
-  // Local state to track the determined currency
-  const [localCurrency, setLocalCurrency] = useState<string | null>(
-    upperManualCurrency || null
-  )
 
   // Pre-emptive API key validation to provide helpful error messages
   const apiKeyError = useMemo(() => {
@@ -61,23 +59,23 @@ export const useCurrencyConverter = ({
     error: geoError,
     isLoading: isGeoLoading,
   } = useQuery<GeolocationResponse, Error>({
-    queryKey: ['geolocation'],
+    queryKey: ['geolocation', geoEndpoint],
     queryFn: async ({ signal }): Promise<GeolocationResponse> => {
       const response = await fetch(
-        'https://ipapi.co/json/',
+        geoEndpoint,
         { signal }
       )
-      
+
       if (!response.ok) {
         throw new Error(`Geolocation API error: ${response.status}`)
       }
-      
+
       const data = await response.json()
-      
+
       if (data.error) {
         throw new Error(data.reason || 'Geolocation detection failed')
       }
-      
+
       return {
         status: 'success',
         currency: data.currency,
@@ -98,13 +96,17 @@ export const useCurrencyConverter = ({
     refetchOnWindowFocus: false,
   })
 
+  // Derive localCurrency from manual currency or geolocation data
+  // This replaces the useState + useEffect pattern to avoid cascading renders
+  const localCurrency = upperManualCurrency || geoData?.currency || null
+
   // 2. Exchange Rate Query - Dependent on localCurrency being available
   const {
     data: exchangeData,
     error: exchangeError,
     isLoading: isExchangeLoading,
   } = useQuery<ExchangeRateResponse, Error>({
-    queryKey: ['exchange-rates', upperBaseCurrency, localCurrency, apiKey],
+    queryKey: ['exchange-rates', upperBaseCurrency, localCurrency],
     queryFn: async ({ signal }): Promise<ExchangeRateResponse> => {
       // Optimization: skip API call if converting to same currency
       if (localCurrency === upperBaseCurrency) {
@@ -145,15 +147,6 @@ export const useCurrencyConverter = ({
     // Don't refetch on window focus to preserve API quota
     refetchOnWindowFocus: false,
   })
-
-  // Effect to update localCurrency once geolocation data arrives
-  useEffect(() => {
-    if (upperManualCurrency) {
-      setLocalCurrency(upperManualCurrency)
-    } else if (geoData?.currency) {
-      setLocalCurrency(geoData.currency)
-    }
-  }, [upperManualCurrency, geoData?.currency])
 
   // Calculate the final values
   const exchangeRate = localCurrency && exchangeData?.conversion_rates

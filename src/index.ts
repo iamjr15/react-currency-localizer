@@ -1,5 +1,6 @@
-// Main hook export
+// Main hook exports
 export { useCurrencyConverter } from './hooks/useCurrencyConverter'
+export { useCurrencyLocalizer } from './hooks/useCurrencyLocalizer'
 
 // Component exports
 export { LocalizedPrice } from './components/LocalizedPrice'
@@ -16,3 +17,9 @@ export type {
   LocalizedPriceProps,
   CurrencyConverterProviderProps,
 } from './types'
+
+// Export types from useCurrencyLocalizer
+export type {
+  UseCurrencyLocalizerOptions,
+  CurrencyLocalizerResult,
+} from './hooks/useCurrencyLocalizer'
